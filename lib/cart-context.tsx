@@ -92,6 +92,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return cart.reduce((count, item) => count + item.quantity, 0)
   }
 
+  if (!isLoaded) {
+    return null
+  }
+  
   return (
     <CartContext.Provider
       value={{
