@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { Product, Order } from './types'
+import { products as staticProducts, categories as staticCategories } from './data'
 
 // ==================== PRODUCT CRUD OPERATIONS ====================
 
@@ -33,8 +34,58 @@ export async function getProducts(filters?: {
 
     const { data, error } = await query.order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data || []
+    if (error) {
+      const pgError = error as any
+
+      // If the products table does not exist in Supabase (PGRST205),
+      // fall back to the static seed data so builds and pages still work.
+      if (pgError?.code === 'PGRST205') {
+        console.warn(
+          "Supabase table 'products' not found (PGRST205). Falling back to static product data from lib/data.ts."
+        )
+
+        let fallback = staticProducts.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          brand: p.brand ?? 'Demo brand',
+          price: p.price,
+          stock: p.stock,
+          category: p.category,
+          description: p.description,
+          image_url: p.image,
+          created_at: new Date().toISOString(),
+        })) as Product[]
+
+        // Apply the same filters on the fallback data
+        if (filters?.category) {
+          fallback = fallback.filter((p) => p.category === filters.category)
+        }
+
+        if (filters?.minPrice !== undefined) {
+          fallback = fallback.filter((p) => p.price >= filters.minPrice!)
+        }
+
+        if (filters?.maxPrice !== undefined) {
+          fallback = fallback.filter((p) => p.price <= filters.maxPrice!)
+        }
+
+        if (filters?.searchQuery) {
+          const q = filters.searchQuery.toLowerCase()
+          fallback = fallback.filter(
+            (p) =>
+              p.name.toLowerCase().includes(q) ||
+              p.brand.toLowerCase().includes(q) ||
+              p.description.toLowerCase().includes(q)
+          )
+        }
+
+        return fallback
+      }
+
+      throw error
+    }
+
+    return (data as Product[]) || []
   } catch (error) {
     console.error('Error fetching products:', error)
     return []
@@ -205,7 +256,19 @@ export async function getCategories() {
       .select('*')
       .order('name')
 
-    if (error) throw error
+    if (error) {
+      const pgError = error as any
+
+      if (pgError?.code === 'PGRST205') {
+        console.warn(
+          "Supabase table 'categories' not found (PGRST205). Falling back to static category data from lib/data.ts."
+        )
+        return staticCategories
+      }
+
+      throw error
+    }
+
     return data || []
   } catch (error) {
     console.error('Error fetching categories:', error)
