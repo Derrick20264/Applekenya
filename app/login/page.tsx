@@ -58,7 +58,7 @@ export default function LoginPage() {
 
       // Step 3: Fetch user role from profiles table
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+        .from('Profiles')
         .select('role')
         .eq('id', currentUser.id)
         .single()
