@@ -1,33 +1,27 @@
+'use client'
+
 import Link from 'next/link'
 import { Product } from '@/lib/types'
+import { useState } from 'react'
 
 interface ProductCardProps {
   product: Product
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [imageError, setImageError] = useState(false)
+
   return (
     <Link href={`/product/${product.id}`} className="group">
       <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform group-hover:-translate-y-1">
         {/* Product Image */}
         <div className="relative bg-gray-100 aspect-square flex items-center justify-center overflow-hidden">
-          {product.image_url ? (
+          {product.image_url && !imageError ? (
             <img 
               src={product.image_url} 
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              onError={(e) => {
-                // Fallback to placeholder if image fails to load
-                e.currentTarget.style.display = 'none'
-                e.currentTarget.parentElement!.innerHTML = `
-                  <div class="flex flex-col items-center justify-center text-gray-400 p-4">
-                    <svg class="w-16 h-16 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span class="text-sm">No Image</span>
-                  </div>
-                `
-              }}
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="flex flex-col items-center justify-center text-gray-400 p-4">

@@ -288,11 +288,6 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
                       src={imagePreview}
                       alt="Preview"
                       className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.src = ''
-                        e.currentTarget.alt = 'Failed to load image'
-                        e.currentTarget.className = 'w-full h-full flex items-center justify-center text-red-500'
-                      }}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
