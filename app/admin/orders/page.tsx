@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getOrders, updateOrderStatus } from '@/lib/supabase-functions'
 import { Order } from '@/lib/types'
+import { formatKsh } from '@/lib/currency'
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
@@ -89,7 +90,7 @@ export default function OrdersPage() {
                   <td className="px-6 py-4 text-sm">
                     {new Date(order.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 font-medium">KSh {order.total.toLocaleString('en-KE')}</td>
+                  <td className="px-6 py-4 font-semibold">{formatKsh(order.total)}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                       {order.status}

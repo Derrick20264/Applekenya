@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Product } from '@/lib/types'
 import { useState } from 'react'
+import { formatKsh } from '@/lib/currency'
 
 interface ProductCardProps {
   product: Product
@@ -53,7 +54,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </h3>
           <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-blue-600">${product.price.toFixed(2)}</span>
+            <span className="text-xl font-bold text-blue-600">{formatKsh(product.price)}</span>
             <span className={`text-sm ${product.stock > 10 ? 'text-green-600' : 'text-orange-600'}`}>
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
             </span>

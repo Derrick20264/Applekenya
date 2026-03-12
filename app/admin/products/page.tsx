@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getProducts, deleteProduct } from '@/lib/supabase-functions'
 import ProductForm from '@/components/admin/ProductForm'
 import { Product } from '@/lib/types'
+import { formatKsh } from '@/lib/currency'
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -94,7 +95,7 @@ export default function ProductsPage() {
                       {product.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{product.price.toLocaleString('en-KE')}</td>
+                  <td className="px-6 py-4 font-semibold">{formatKsh(product.price)}</td>
                   <td className="px-6 py-4">
                     <span className={product.stock > 10 ? 'text-green-600' : 'text-red-600'}>
                       {product.stock}

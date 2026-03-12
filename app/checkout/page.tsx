@@ -5,6 +5,7 @@ import { useCart } from '@/lib/cart-context'
 import { createOrder } from '@/lib/supabase-functions'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { formatKsh } from '@/lib/currency'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -25,8 +26,8 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState('')
 
   const subtotal = getCartTotal()
-  const shipping = subtotal >= 50 ? 0 : 10
-  const tax = subtotal * 0.08
+  const shipping = subtotal >= 6500 ? 0 : 500 // Free shipping over KSh 6,500
+  const tax = subtotal * 0.16 // 16% VAT in Kenya
   const total = subtotal + shipping + tax
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -213,7 +214,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Total Paid</span>
-              <span className="font-bold text-green-600">KES {total.toFixed(2)}</span>
+              <span className="font-bold text-green-600">{formatKsh(total)}</span>
             </div>
           </div>
 
@@ -366,7 +367,7 @@ export default function CheckoutPage() {
                       <p className="font-medium text-sm truncate">{item.name}</p>
                       <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                       <p className="text-sm font-semibold text-blue-600">
-                        KES {(item.price * item.quantity).toFixed(2)}
+                        {formatKsh(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -377,21 +378,21 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-6 pt-4 border-t">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">KES {subtotal.toFixed(2)}</span>
+                  <span className="font-medium">{formatKsh(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
                   <span className="font-medium">
-                    {shipping === 0 ? <span className="text-green-600">FREE</span> : `KES ${shipping.toFixed(2)}`}
+                    {shipping === 0 ? <span className="text-green-600">FREE</span> : formatKsh(shipping)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax (8%)</span>
-                  <span className="font-medium">KES {tax.toFixed(2)}</span>
+                  <span className="text-gray-600">Tax (16% VAT)</span>
+                  <span className="font-medium">{formatKsh(tax)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-3 border-t">
                   <span>Total</span>
-                  <span className="text-blue-600">KES {total.toFixed(2)}</span>
+                  <span className="text-blue-600">{formatKsh(total)}</span>
                 </div>
               </div>
 
