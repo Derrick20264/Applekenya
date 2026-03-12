@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
-  const { signIn, user, loading } = useAuth()
+  const { signIn, user, profile, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/'
+  const redirectTo = searchParams.get('redirectTo')
 
   const [formData, setFormData] = useState({
     email: '',
@@ -19,23 +20,66 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    if (user && !loading) {
-      router.push(redirectTo)
+    // Redirect if already logged in
+    if (user && profile && !loading) {
+      if (redirectTo) {
+        router.push(redirectTo)
+      } else {
+        // Role-based redirect
+        const destination = profile.role === 'admin' ? '/admin' : '/'
+        router.push(destination)
+      }
     }
-  }, [user, loading, router, redirectTo])
+  }, [user, profile, loading, router, redirectTo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
 
-    const { error } = await signIn(formData.email, formData.password)
+    try {
+      // Step 1: Sign in with Supabase Auth
+      const { error: signInError } = await signIn(formData.email, formData.password)
 
-    if (error) {
-      setError(error.message)
+      if (signInError) {
+        setError(signInError.message)
+        setIsLoading(false)
+        return
+      }
+
+      // Step 2: Get the current user
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !currentUser) {
+        setError('Failed to fetch user information')
+        setIsLoading(false)
+        return
+      }
+
+      // Step 3: Fetch user role from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single()
+
+      if (profileError) {
+        setError('Failed to fetch user role. Please try again.')
+        setIsLoading(false)
+        return
+      }
+
+      // Step 4: Redirect based on role
+      if (redirectTo) {
+        router.push(redirectTo)
+      } else {
+        const destination = profileData.role === 'admin' ? '/admin' : '/'
+        router.push(destination)
+      }
+
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred')
       setIsLoading(false)
-    } else {
-      router.push(redirectTo)
     }
   }
 
