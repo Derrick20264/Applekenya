@@ -69,7 +69,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm mb-1">Total Revenue</p>
-                  <p className="text-3xl font-bold">${stats.totalRevenue.toLocaleString()}</p>
+                  <p className="text-3xl font-bold">KSh {stats.totalRevenue.toLocaleString('en-KE')}</p>
                 </div>
                 <div className="bg-white bg-opacity-20 p-3 rounded-lg">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">

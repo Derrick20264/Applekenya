@@ -94,7 +94,7 @@ export default function ProductsPage() {
                       {product.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4">${product.price}</td>
+                  <td className="px-6 py-4">{product.price.toLocaleString('en-KE')}</td>
                   <td className="px-6 py-4">
                     <span className={product.stock > 10 ? 'text-green-600' : 'text-red-600'}>
                       {product.stock}

@@ -87,7 +87,7 @@ export default function ShopFilters({
               onChange={() => onPriceRangeChange('under-100')}
               className="mr-3 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm">Under $100</span>
+            <span className="text-sm">Under KSh 13,000</span>
           </label>
           <label className="flex items-center cursor-pointer">
             <input
@@ -97,7 +97,7 @@ export default function ShopFilters({
               onChange={() => onPriceRangeChange('100-500')}
               className="mr-3 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm">$100 - $500</span>
+            <span className="text-sm">KSh 13,000 - KSh 65,000</span>
           </label>
           <label className="flex items-center cursor-pointer">
             <input
@@ -107,7 +107,7 @@ export default function ShopFilters({
               onChange={() => onPriceRangeChange('500-1000')}
               className="mr-3 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm">$500 - $1,000</span>
+            <span className="text-sm">KSh 65,000 - KSh 130,000</span>
           </label>
           <label className="flex items-center cursor-pointer">
             <input
@@ -117,7 +117,7 @@ export default function ShopFilters({
               onChange={() => onPriceRangeChange('over-1000')}
               className="mr-3 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm">Over $1,000</span>
+            <span className="text-sm">Over KSh 130,000</span>
           </label>
         </div>
       </div>

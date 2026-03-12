@@ -63,7 +63,7 @@ export default async function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold mb-2">Fast Delivery</h3>
-              <p className="text-gray-600">Free shipping on orders over $50 with express delivery options</p>
+              <p className="text-gray-600">Free shipping on orders over KSh 6,500 with express delivery options</p>
             </div>
 
             <div className="text-center">

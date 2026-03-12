@@ -4,6 +4,7 @@ import Link from 'next/link'
 import AddToCartButton from '@/components/AddToCartButton'
 import ProductGallery from '@/components/ProductGallery'
 import RelatedProducts from '@/components/RelatedProducts'
+import { formatKsh } from '@/lib/currency'
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
   const product = await getProductById(params.id)
@@ -63,7 +64,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
               {/* Price and Stock */}
               <div className="flex items-baseline gap-4 mb-6 pb-6 border-b">
-                <p className="text-4xl font-bold text-blue-600">${product.price.toFixed(2)}</p>
+                <p className="text-4xl font-bold text-blue-600">{formatKsh(product.price)}</p>
                 {product.stock < 10 && product.stock > 0 && (
                   <span className="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
                     Only {product.stock} left!
@@ -157,7 +158,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
             </div>
             <div className="flex justify-between py-3 border-b">
               <span className="font-medium text-gray-600">Price</span>
-              <span className="text-gray-900 font-semibold">${product.price.toFixed(2)}</span>
+              <span className="text-gray-900 font-semibold">{formatKsh(product.price)}</span>
             </div>
             <div className="flex justify-between py-3 border-b">
               <span className="font-medium text-gray-600">Stock Status</span>

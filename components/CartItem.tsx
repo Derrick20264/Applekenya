@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { CartItem as CartItemType } from '@/lib/cart-context'
+import { formatKsh } from '@/lib/currency'
 
 interface CartItemProps {
   item: CartItemType
@@ -63,7 +64,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }: CartItemP
         <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-start gap-4">
           <div className="text-right">
             <p className="text-sm text-gray-600 mb-1">Price</p>
-            <p className="text-lg font-bold text-blue-600">${item.price.toFixed(2)}</p>
+            <p className="text-lg font-bold text-blue-600">{formatKsh(item.price)}</p>
           </div>
 
           {/* Quantity Controls */}
@@ -104,7 +105,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }: CartItemP
           {/* Subtotal */}
           <div className="text-right">
             <p className="text-sm text-gray-600 mb-1">Subtotal</p>
-            <p className="text-xl font-bold text-gray-900">${subtotal.toFixed(2)}</p>
+            <p className="text-xl font-bold text-gray-900">{formatKsh(subtotal)}</p>
           </div>
 
           {/* Remove Button */}

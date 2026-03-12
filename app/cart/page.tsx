@@ -4,13 +4,14 @@ import { useCart } from '@/lib/cart-context'
 import CartItem from '@/components/CartItem'
 import Link from 'next/link'
 import { useState } from 'react'
+import { formatKsh } from '@/lib/currency'
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, getCartTotal, getCartCount } = useCart()
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   const subtotal = getCartTotal()
-  const shipping = subtotal > 0 ? (subtotal >= 50 ? 0 : 10) : 0
+  const shipping = subtotal > 0 ? (subtotal >= 6500 ? 0 : 1300) : 0 // thresholds converted from USD to KSh
   const tax = subtotal * 0.08 // 8% tax
   const total = subtotal + shipping + tax
 
@@ -102,7 +103,7 @@ export default function CartPage() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal ({getCartCount()} items)</span>
-                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                  <span className="font-medium">{formatKsh(subtotal)}</span>
                 </div>
 
                 <div className="flex justify-between text-gray-600">
@@ -111,28 +112,28 @@ export default function CartPage() {
                     {shipping === 0 ? (
                       <span className="text-green-600">FREE</span>
                     ) : (
-                      `$${shipping.toFixed(2)}`
+                      formatKsh(shipping)
                     )}
                   </span>
                 </div>
 
-                {subtotal > 0 && subtotal < 50 && (
+                {subtotal > 0 && subtotal < 6500 && (
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-sm text-blue-800">
-                      Add <span className="font-semibold">${(50 - subtotal).toFixed(2)}</span> more to get FREE shipping!
+                      Add <span className="font-semibold">{formatKsh(6500 - subtotal)}</span> more to get FREE shipping!
                     </p>
                   </div>
                 )}
 
                 <div className="flex justify-between text-gray-600">
                   <span>Tax (8%)</span>
-                  <span className="font-medium">${tax.toFixed(2)}</span>
+                  <span className="font-medium">{formatKsh(tax)}</span>
                 </div>
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold">Total</span>
-                    <span className="text-2xl font-bold text-blue-600">${total.toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-blue-600">{formatKsh(total)}</span>
                   </div>
                 </div>
               </div>
