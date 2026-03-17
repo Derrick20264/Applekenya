@@ -19,18 +19,12 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // Redirect already-logged-in users (e.g. navigating back to /login)
   useEffect(() => {
-    // Redirect if already logged in
-    if (user && profile && !loading) {
-      if (redirectTo) {
-        router.push(redirectTo)
-      } else {
-        // Role-based redirect
-        const destination = profile.role === 'admin' ? '/admin' : '/'
-        router.push(destination)
-      }
+    if (!loading && user && profile) {
+      router.push(redirectTo ?? (profile.role === 'admin' ? '/admin' : '/'))
     }
-  }, [user, profile, loading, router, redirectTo])
+  }, [loading, user, profile, router, redirectTo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,45 +34,37 @@ export default function LoginPage() {
     try {
       // Step 1: Sign in with Supabase Auth
       const { error: signInError } = await signIn(formData.email, formData.password)
-
       if (signInError) {
         setError(signInError.message)
-        setIsLoading(false)
         return
       }
 
-      // Step 2: Get the current user
+      // Step 2: Get the authenticated user
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
-
       if (userError || !currentUser) {
-        setError('Failed to fetch user information')
-        setIsLoading(false)
+        setError('Login succeeded but failed to load user. Please refresh.')
         return
       }
 
-      // Step 3: Fetch user role from profiles table
+      // Step 3: Fetch role from profiles table (lowercase — matches schema)
       const { data: profileData, error: profileError } = await supabase
-        .from('Profiles')
+        .from('profiles')
         .select('role')
         .eq('id', currentUser.id)
         .single()
 
-      if (profileError) {
-        setError('Failed to fetch user role. Please try again.')
-        setIsLoading(false)
+      if (profileError || !profileData) {
+        setError('Could not fetch your account role. Please contact support.')
         return
       }
 
-      // Step 4: Redirect based on role
-      if (redirectTo) {
-        router.push(redirectTo)
-      } else {
-        const destination = profileData.role === 'admin' ? '/admin' : '/'
-        router.push(destination)
-      }
+      // Step 4: Redirect based on role — happens only after role is confirmed
+      const destination = redirectTo ?? (profileData.role === 'admin' ? '/admin' : '/')
+      router.push(destination)
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred')
+    } finally {
       setIsLoading(false)
     }
   }
