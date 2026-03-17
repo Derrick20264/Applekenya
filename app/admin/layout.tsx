@@ -1,13 +1,37 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { ReactNode } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { ReactNode, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const { signOut, profile } = useAuth()
+  const router = useRouter()
+  const { signOut, profile, loading } = useAuth()
+
+  // Wait for session/profile to load before deciding to redirect.
+  // Without this guard, loading=true causes isAdmin=false and kicks
+  // legitimate admins to /access-denied on every page refresh.
+  useEffect(() => {
+    if (loading) return
+    if (!profile) {
+      router.replace('/login?redirectTo=/admin')
+      return
+    }
+    if (profile.role !== 'admin') {
+      router.replace('/access-denied')
+    }
+  }, [loading, profile, router])
+
+  // Show nothing while auth state is resolving
+  if (loading || !profile || profile.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: '📊' },
@@ -24,16 +48,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin" className="text-2xl font-bold mb-8 block">
               Admin Panel
             </Link>
-            
-            {profile && (
-              <div className="mb-8 pb-6 border-b border-gray-700">
-                <p className="text-sm text-gray-400">Logged in as</p>
-                <p className="font-medium truncate">{profile.email}</p>
-                <span className="inline-block mt-2 px-2 py-1 bg-blue-600 text-xs rounded">
-                  {profile.role}
-                </span>
-              </div>
-            )}
+
+            <div className="mb-8 pb-6 border-b border-gray-700">
+              <p className="text-sm text-gray-400">Logged in as</p>
+              <p className="font-medium truncate">{profile.email}</p>
+              <span className="inline-block mt-2 px-2 py-1 bg-blue-600 text-xs rounded">
+                {profile.role}
+              </span>
+            </div>
 
             <nav className="space-y-2">
               {navItems.map((item) => {
@@ -63,7 +85,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <span className="text-xl">🏠</span>
                 <span className="font-medium">Back to Store</span>
               </Link>
-              
+
               <button
                 onClick={() => signOut()}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-red-600 hover:text-white transition"

@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context'
 
 export default function Navbar() {
   const { getCartCount } = useCart()
-  const { user, isAdmin, signOut } = useAuth()
+  const { user, isAdmin, loading, signOut } = useAuth()
   const cartCount = getCartCount()
 
   return (
@@ -37,7 +37,8 @@ export default function Navbar() {
               </div>
             </Link>
             
-            {isAdmin && (
+            {/* Only render admin link once auth has resolved, to avoid flicker */}
+            {!loading && isAdmin && (
               <Link href="/admin" className="hover:text-blue-600 transition font-medium">
                 Admin
               </Link>

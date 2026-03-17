@@ -10,25 +10,13 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession()
 
-  // Check if accessing admin routes
+  // Only check session here — role check happens in the admin layout
+  // (Edge runtime cannot reliably query Supabase DB tables)
   if (req.nextUrl.pathname.startsWith('/admin')) {
-    // Not authenticated - redirect to login
     if (!session) {
       const redirectUrl = new URL('/login', req.url)
       redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      // Not an admin - redirect to access denied
-      return NextResponse.redirect(new URL('/access-denied', req.url))
     }
   }
 
