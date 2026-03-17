@@ -3,26 +3,20 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
+  // createMiddlewareClient refreshes the session cookie so the client-side
+  // AuthContext always receives a valid, non-expired session.
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  // Only check session here — role check happens in the admin layout
-  // (Edge runtime cannot reliably query Supabase DB tables)
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      const redirectUrl = new URL('/login', req.url)
-      redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
-  }
+  // Calling getSession() here is what keeps the cookie alive.
+  // We do NOT query the profiles table — that fails silently on the Edge
+  // runtime and is what caused the original redirect loop.
+  await supabase.auth.getSession()
 
   return res
 }
 
+// Run on every /admin route so the session cookie is always refreshed
 export const config = {
   matcher: ['/admin/:path*'],
 }

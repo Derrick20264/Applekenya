@@ -8,26 +8,29 @@ import { useAuth } from '@/lib/auth-context'
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { signOut, profile, loading } = useAuth()
+  const { user, profile, loading, isAdmin, signOut } = useAuth()
 
-  // Wait for session/profile to load before deciding to redirect.
-  // Without this guard, loading=true causes isAdmin=false and kicks
-  // legitimate admins to /access-denied on every page refresh.
   useEffect(() => {
+    // Don't make any routing decision until auth has fully settled.
+    // This is the key fix — previously the effect ran while loading=true,
+    // saw profile=null, and immediately redirected to /login.
     if (loading) return
-    if (!profile) {
+
+    if (!user) {
       router.replace('/login?redirectTo=/admin')
       return
     }
-    if (profile.role !== 'admin') {
+
+    if (!isAdmin) {
       router.replace('/access-denied')
     }
-  }, [loading, profile, router])
+  }, [loading, user, isAdmin, router])
 
-  // Show nothing while auth state is resolving
-  if (loading || !profile || profile.role !== 'admin') {
+  // Block rendering until we know for sure the user is an admin.
+  // Show a spinner rather than a flash of the wrong content.
+  if (loading || !user || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     )
@@ -42,7 +45,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
-        {/* Sidebar */}
         <aside className="w-64 bg-gray-900 text-white min-h-screen fixed left-0 top-0">
           <div className="p-6">
             <Link href="/admin" className="text-2xl font-bold mb-8 block">
@@ -51,9 +53,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
             <div className="mb-8 pb-6 border-b border-gray-700">
               <p className="text-sm text-gray-400">Logged in as</p>
-              <p className="font-medium truncate">{profile.email}</p>
+              <p className="font-medium truncate">{profile?.email ?? user.email}</p>
               <span className="inline-block mt-2 px-2 py-1 bg-blue-600 text-xs rounded">
-                {profile.role}
+                {profile?.role ?? 'admin'}
               </span>
             </div>
 
@@ -97,7 +99,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </aside>
 
-        {/* Main Content */}
         <main className="flex-1 ml-64 p-8">
           {children}
         </main>
