@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context'
-import { MASTER_ADMIN_EMAIL } from '@/lib/auth-context'
+import { useState, useEffect, useRef } from 'react'
+import { useAuth, MASTER_ADMIN_EMAIL } from '@/lib/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -17,30 +16,21 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // If the user is already logged in and lands on /login, send them away.
-  // We only do this once loading is false so we don't redirect prematurely.
-  // handleSubmit handles the post-login redirect — this only covers the
-  // "already authenticated, navigated back to /login" case.
+  // Flag set by handleSubmit so the useEffect doesn't fire a competing
+  // redirect while handleSubmit is already mid-execution.
+  const isSubmittingRef = useRef(false)
+
+  // Handles only the "already logged in, navigated back to /login" case.
+  // Post-login redirects are owned exclusively by handleSubmit.
   useEffect(() => {
-    if (loading || !user) return
-    // Use the redirectTo param if present, otherwise decide by email/role
-    // after a fresh profile fetch so we don't rely on stale context state.
+    if (loading || !user || isSubmittingRef.current) return
+
     const go = async () => {
-      if (redirectTo) {
-        router.replace(redirectTo)
-        return
-      }
-      // Master key — no DB round-trip needed
-      if (user.email === MASTER_ADMIN_EMAIL) {
-        router.replace('/admin')
-        return
-      }
-      // Fetch role for everyone else
+      if (redirectTo) { router.replace(redirectTo); return }
+      if (user.email === MASTER_ADMIN_EMAIL) { router.replace('/admin'); return }
+
       const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+        .from('profiles').select('role').eq('id', user.id).single()
       router.replace(data?.role === 'admin' ? '/admin' : '/')
     }
     go()
@@ -50,47 +40,43 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setIsLoading(true)
+    isSubmittingRef.current = true  // block useEffect for the duration
 
     try {
-      // Step 1: sign in
       const { error: signInError } = await signIn(formData.email, formData.password)
       if (signInError) {
         setError(signInError.message)
         return
       }
 
-      // Step 2: get the freshly authenticated user
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
       if (userError || !currentUser) {
         setError('Signed in but could not load your account. Please refresh.')
         return
       }
 
-      // Step 3: master-key shortcut — no DB query needed
+      // Master-key shortcut — no DB query needed
       if (currentUser.email === MASTER_ADMIN_EMAIL) {
         router.push(redirectTo ?? '/admin')
         return
       }
 
-      // Step 4: fetch role from profiles table
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', currentUser.id)
-        .single()
+        .from('profiles').select('role').eq('id', currentUser.id).single()
 
       if (profileError || !profileData) {
         setError('Could not fetch your account role. Please try again.')
         return
       }
 
-      // Step 5: redirect — single call, happens only after role is confirmed
+      // Single redirect — only after role is confirmed
       router.push(redirectTo ?? (profileData.role === 'admin' ? '/admin' : '/'))
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
+      isSubmittingRef.current = false
     }
   }
 
