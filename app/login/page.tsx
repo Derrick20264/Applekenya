@@ -2,29 +2,49 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import { MASTER_ADMIN_EMAIL } from '@/lib/auth-context'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
-  const { signIn, user, profile, loading } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo')
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  })
+  const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // Redirect already-logged-in users (e.g. navigating back to /login)
+  // If the user is already logged in and lands on /login, send them away.
+  // We only do this once loading is false so we don't redirect prematurely.
+  // handleSubmit handles the post-login redirect — this only covers the
+  // "already authenticated, navigated back to /login" case.
   useEffect(() => {
-    if (!loading && user && profile) {
-      router.push(redirectTo ?? (profile.role === 'admin' ? '/admin' : '/'))
+    if (loading || !user) return
+    // Use the redirectTo param if present, otherwise decide by email/role
+    // after a fresh profile fetch so we don't rely on stale context state.
+    const go = async () => {
+      if (redirectTo) {
+        router.replace(redirectTo)
+        return
+      }
+      // Master key — no DB round-trip needed
+      if (user.email === MASTER_ADMIN_EMAIL) {
+        router.replace('/admin')
+        return
+      }
+      // Fetch role for everyone else
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      router.replace(data?.role === 'admin' ? '/admin' : '/')
     }
-  }, [loading, user, profile, router, redirectTo])
+    go()
+  }, [loading, user, redirectTo, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,21 +52,27 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // Step 1: Sign in with Supabase Auth
+      // Step 1: sign in
       const { error: signInError } = await signIn(formData.email, formData.password)
       if (signInError) {
         setError(signInError.message)
         return
       }
 
-      // Step 2: Get the authenticated user
+      // Step 2: get the freshly authenticated user
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser()
       if (userError || !currentUser) {
-        setError('Login succeeded but failed to load user. Please refresh.')
+        setError('Signed in but could not load your account. Please refresh.')
         return
       }
 
-      // Step 3: Fetch role from profiles table (lowercase — matches schema)
+      // Step 3: master-key shortcut — no DB query needed
+      if (currentUser.email === MASTER_ADMIN_EMAIL) {
+        router.push(redirectTo ?? '/admin')
+        return
+      }
+
+      // Step 4: fetch role from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
@@ -54,13 +80,12 @@ export default function LoginPage() {
         .single()
 
       if (profileError || !profileData) {
-        setError('Could not fetch your account role. Please contact support.')
+        setError('Could not fetch your account role. Please try again.')
         return
       }
 
-      // Step 4: Redirect based on role — happens only after role is confirmed
-      const destination = redirectTo ?? (profileData.role === 'admin' ? '/admin' : '/')
-      router.push(destination)
+      // Step 5: redirect — single call, happens only after role is confirmed
+      router.push(redirectTo ?? (profileData.role === 'admin' ? '/admin' : '/'))
 
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred')
@@ -72,7 +97,7 @@ export default function LoginPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     )
   }
@@ -142,15 +167,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Demo Credentials */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm font-medium text-blue-900 mb-2">Demo Credentials:</p>
-          <p className="text-xs text-blue-800">
-            Admin: admin@example.com / admin123
-          </p>
-          <p className="text-xs text-blue-800">
-            User: user@example.com / user123
-          </p>
+          <p className="text-xs text-blue-800">Admin: admin@example.com / admin123</p>
+          <p className="text-xs text-blue-800">User: user@example.com / user123</p>
         </div>
       </div>
     </div>

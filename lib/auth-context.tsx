@@ -4,8 +4,7 @@ import { createContext, useContext, useState, useEffect, useRef, ReactNode } fro
 import { supabase } from './supabase'
 import { User } from '@supabase/supabase-js'
 
-// The master-key email — grants admin access even if the DB profile is delayed
-const MASTER_ADMIN_EMAIL = 'wachiraderrick01@gmail.com'
+export const MASTER_ADMIN_EMAIL = 'wachiraderrick01@gmail.com'
 
 interface UserProfile {
   id: string
@@ -17,7 +16,6 @@ interface UserProfile {
 interface AuthContextType {
   user: User | null
   profile: UserProfile | null
-  /** true while the initial session + profile fetch is in flight */
   loading: boolean
   isAdmin: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
@@ -33,12 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Prevent fetchProfile from running concurrently (the double-fire race)
-  const fetchingRef = useRef(false)
+  // Track which userId we last fetched so we don't double-fetch for the
+  // same user, but DO allow a fresh fetch when the user changes.
+  const lastFetchedUserId = useRef<string | null>(null)
 
   const fetchProfile = async (userId: string) => {
-    if (fetchingRef.current) return
-    fetchingRef.current = true
+    // Skip if we already fetched for this exact user id
+    if (lastFetchedUserId.current === userId) return
+    lastFetchedUserId.current = userId
 
     try {
       const { data, error } = await supabase
@@ -53,24 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching profile:', err)
       setProfile(null)
     } finally {
-      fetchingRef.current = false
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    // onAuthStateChange fires immediately with the current session,
-    // so we don't need a separate getSession() call — that's what caused
-    // the double fetchProfile race.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    // onAuthStateChange fires immediately with the current session on mount,
+    // so no separate getSession() call is needed (that caused the double-fetch).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
       if (currentUser) {
         fetchProfile(currentUser.id)
       } else {
+        // Signed out — reset everything
+        lastFetchedUserId.current = null
         setProfile(null)
         setLoading(false)
       }
@@ -80,10 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refreshProfile = async () => {
-    if (user) {
-      fetchingRef.current = false // allow a fresh fetch
-      await fetchProfile(user.id)
-    }
+    if (!user) return
+    // Force a fresh fetch by clearing the cache ref
+    lastFetchedUserId.current = null
+    await fetchProfile(user.id)
   }
 
   const signIn = async (email: string, password: string) => {
@@ -112,14 +110,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut()
+    lastFetchedUserId.current = null
     setUser(null)
     setProfile(null)
   }
 
-  // isAdmin: DB role OR master-key email (checked against user, not profile,
-  // so it works even before the profile fetch completes)
-  const isAdmin =
-    profile?.role === 'admin' || user?.email === MASTER_ADMIN_EMAIL
+  // isAdmin is derived from the DB role OR the master-key email.
+  // Checking user?.email (not profile?.email) means the master key works
+  // immediately after sign-in, before the profile fetch completes.
+  const isAdmin = profile?.role === 'admin' || user?.email === MASTER_ADMIN_EMAIL
 
   return (
     <AuthContext.Provider
