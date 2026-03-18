@@ -11,29 +11,38 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, profile, loading, isAdmin, signOut } = useAuth()
 
   useEffect(() => {
-    // Don't make any routing decision until auth has fully settled.
-    // This is the key fix — previously the effect ran while loading=true,
-    // saw profile=null, and immediately redirected to /login.
+    // Never redirect while auth is still resolving — this was the
+    // root cause of the loop. loading=true means user/isAdmin are
+    // not trustworthy yet, so any redirect here would be premature.
     if (loading) return
 
+    // Auth settled: no user → send to login
     if (!user) {
       router.replace('/login?redirectTo=/admin')
       return
     }
 
+    // Auth settled: user exists but is not admin → access denied
     if (!isAdmin) {
       router.replace('/access-denied')
     }
   }, [loading, user, isAdmin, router])
 
-  // Block rendering until we know for sure the user is an admin.
-  // Show a spinner rather than a flash of the wrong content.
-  if (loading || !user || !isAdmin) {
+  // 1. Still loading — show spinner, do nothing else
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
       </div>
     )
+  }
+
+  // 2. Auth resolved but not authorised — render nothing while the
+  //    useEffect above fires the redirect. Returning null prevents
+  //    the admin UI from flashing and avoids a second render cycle
+  //    that could re-trigger the redirect loop.
+  if (!user || !isAdmin) {
+    return null
   }
 
   const navItems = [
