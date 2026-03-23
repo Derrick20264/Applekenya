@@ -109,19 +109,30 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function createProduct(product: Omit<Product, 'id' | 'created_at'>): Promise<Product | null> {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .insert([product])
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  } catch (error) {
-    console.error('Error creating product:', error)
-    return null
+  // Sanitize before insert — prevent type mismatches and undefined values
+  const sanitized = {
+    name: product.name ?? '',
+    brand: product.brand ?? '',
+    price: Number(product.price) || 0,
+    stock: Number(product.stock) || 0,
+    category: product.category ?? '',
+    description: product.description ?? '',
+    image_url: product.image_url ?? '',
   }
+
+  const { data, error } = await supabase
+    .from('products')
+    .insert([sanitized])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Supabase createProduct error:', error)
+    // Re-throw with full detail so the caller can surface it to the user
+    throw error
+  }
+
+  return data
 }
 
 export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {

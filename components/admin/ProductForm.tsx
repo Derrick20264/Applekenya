@@ -47,23 +47,28 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     setLoading(true)
 
     try {
-      let imageUrl = formData.image_url
+      let imageUrl = formData.image_url.trim()
 
-      // Upload image if a new file is selected
+      // Upload image first — capture the returned URL before building productData
       if (imageFile && imageSource === 'upload') {
         setUploadProgress(true)
         imageUrl = await uploadProductImage(imageFile)
         setUploadProgress(false)
+
+        if (!imageUrl) {
+          alert('Image upload failed. Please try again.')
+          return
+        }
       }
 
       const productData = {
-        name: formData.name,
-        brand: formData.brand,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
+        name: formData.name.trim(),
+        brand: formData.brand.trim() || '',
+        price: Number(formData.price) || 0,
+        stock: Number(formData.stock) || 0,
         category: formData.category,
-        description: formData.description,
-        image_url: imageUrl,
+        description: formData.description.trim() || '',
+        image_url: imageUrl || '',
       }
 
       if (product) {
@@ -73,11 +78,14 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       }
 
       onClose()
-    } catch (error) {
-      console.error('Error saving product:', error)
-      alert('Failed to save product')
+    } catch (error: any) {
+      console.error('Error saving product — full error object:', error)
+      alert(
+        `Failed to save product.\n\nMessage: ${error?.message ?? 'Unknown error'}\nHint: ${error?.hint ?? 'Check the console for details.'}`
+      )
     } finally {
       setLoading(false)
+      setUploadProgress(false)
     }
   }
 
