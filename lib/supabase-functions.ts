@@ -169,27 +169,34 @@ export async function deleteProduct(id: string): Promise<boolean> {
 
 // ==================== IMAGE UPLOAD ====================
 
+// Change BUCKET_NAME if you rename the bucket in Supabase Storage
+const BUCKET_NAME = 'products'
+
 export async function uploadProductImage(file: File): Promise<string> {
-  try {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `products/${fileName}`
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+  const filePath = `product-images/${fileName}`
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, file)
+  // Step 1: upload the file
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(filePath, file)
 
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage
-      .from('product-images')
-      .getPublicUrl(filePath)
-
-    return data.publicUrl
-  } catch (error) {
-    console.error('Error uploading image:', error)
-    throw error
+  if (uploadError) {
+    console.error('Storage upload error:', uploadError)
+    throw new Error(uploadError.message)
   }
+
+  // Step 2: get the public URL only after a successful upload
+  const { data } = supabase.storage
+    .from(BUCKET_NAME)
+    .getPublicUrl(filePath)
+
+  if (!data?.publicUrl) {
+    throw new Error('Upload succeeded but could not retrieve the public URL.')
+  }
+
+  return data.publicUrl
 }
 
 // ==================== ORDER OPERATIONS ====================
