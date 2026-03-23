@@ -109,26 +109,28 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function createProduct(product: Omit<Product, 'id' | 'created_at'>): Promise<Product | null> {
-  // Sanitize before insert — prevent type mismatches and undefined values
-  const sanitized = {
-    name: product.name ?? '',
-    brand: product.brand ?? '',
-    price: Number(product.price) || 0,
-    stock: Number(product.stock) || 0,
-    category: product.category ?? '',
-    description: product.description ?? '',
-    image_url: product.image_url ?? '',
+  // Explicitly map every column — no spreading, no undefined values
+  const payload = {
+    name:        String(product.name        ?? '').trim(),
+    brand:       String(product.brand       ?? '').trim(),
+    price:       Number(product.price)  || 0,
+    stock:       Number(product.stock)  || 0,
+    category:    String(product.category    ?? '').trim(),
+    description: String(product.description ?? '').trim(),
+    image_url:   String(product.image_url   ?? '').trim(),
   }
+
+  console.log('Final Payload:', payload)
 
   const { data, error } = await supabase
     .from('products')
-    .insert([sanitized])
+    .insert([payload])
     .select()
     .single()
 
   if (error) {
-    console.error('Supabase createProduct error:', error)
-    // Re-throw with full detail so the caller can surface it to the user
+    console.error('Supabase Error:', error.message, error.details, error.hint)
+    alert('Error: ' + error.message)
     throw error
   }
 

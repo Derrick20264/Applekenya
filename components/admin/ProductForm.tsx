@@ -49,27 +49,31 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     try {
       let imageUrl = formData.image_url.trim()
 
-      // Upload image first — capture the returned URL before building productData
+      // Step 1: upload file and capture the returned public URL
       if (imageFile && imageSource === 'upload') {
         setUploadProgress(true)
         imageUrl = await uploadProductImage(imageFile)
         setUploadProgress(false)
 
         if (!imageUrl) {
-          alert('Image upload failed. Please try again.')
+          alert('Image upload failed — no URL returned. Please try again.')
           return
         }
       }
 
+      // Step 2: build payload with exact column names, no undefined values
       const productData = {
-        name: formData.name.trim(),
-        brand: formData.brand.trim() || '',
-        price: Number(formData.price) || 0,
-        stock: Number(formData.stock) || 0,
-        category: formData.category,
-        description: formData.description.trim() || '',
-        image_url: imageUrl || '',
+        name:        formData.name.trim(),
+        brand:       formData.brand.trim()        || '',
+        price:       Number(formData.price)       || 0,
+        stock:       Number(formData.stock)       || 0,
+        category:    formData.category,
+        description: formData.description.trim()  || '',
+        image_url:   imageUrl                     || '',
       }
+
+      // Step 3: log so you can inspect the exact payload before it hits Supabase
+      console.log('Final Payload:', productData)
 
       if (product) {
         await updateProduct(product.id, productData)
@@ -79,10 +83,9 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
 
       onClose()
     } catch (error: any) {
-      console.error('Error saving product — full error object:', error)
-      alert(
-        `Failed to save product.\n\nMessage: ${error?.message ?? 'Unknown error'}\nHint: ${error?.hint ?? 'Check the console for details.'}`
-      )
+      // Surface the full Supabase error — message, details, and hint
+      console.error('Supabase Error:', error?.message, error?.details, error?.hint)
+      alert('Error: ' + (error?.message ?? 'Unknown error'))
     } finally {
       setLoading(false)
       setUploadProgress(false)
