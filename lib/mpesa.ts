@@ -111,8 +111,9 @@ export async function initiateMpesaSTKPush(
     const timestamp        = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)
     const password         = Buffer.from(`${businessShortCode}${passkey}${timestamp}`).toString('base64')
 
-    const phone  = formatPhone(request.phoneNumber)
-    const amount = toWholeAmount(request.amount)
+    const phone       = formatPhone(request.phoneNumber)
+    const amount      = Math.trunc(request.amount) // integer — no decimals, no rounding up
+    const callbackUrl = process.env.MPESA_CALLBACK_URL || `${process.env.NEXT_PUBLIC_APP_URL}/api/mpesa/callback`
 
     const payload = {
       BusinessShortCode: businessShortCode,
@@ -123,12 +124,13 @@ export async function initiateMpesaSTKPush(
       PartyA:            phone,
       PartyB:            businessShortCode,
       PhoneNumber:       phone,
-      CallBackURL:       `${process.env.NEXT_PUBLIC_APP_URL}/api/mpesa/callback`,
+      CallBackURL:       callbackUrl,
       AccountReference:  request.accountReference,
       TransactionDesc:   request.transactionDesc,
     }
 
-    console.log('[M-Pesa] STK Push payload:', { ...payload, Password: '***' })
+    // Log the exact JSON body being sent so you can verify CallBackURL and Amount
+    console.log('[M-Pesa] STK Push body:', JSON.stringify({ ...payload, Password: '***' }, null, 2))
 
     const response = await fetch(URLS[MPESA_ENV].stkpush, {
       method:  'POST',
