@@ -55,8 +55,8 @@ export default function CheckoutPage() {
       return false
     }
 
-    // Validate phone number format
-    const phoneRegex = /^(\+?254|0)?[17]\d{8}$/
+    // Validate Kenyan phone number — accepts 07xx, 01xx, +2547xx, 2547xx
+    const phoneRegex = /^(\+?254|0)[17]\d{8}$|^(\+?254|0)1\d{8}$/
     if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
       setErrorMessage('Please enter a valid Kenyan phone number (e.g., 0712345678)')
       return false
@@ -88,13 +88,14 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber: formData.phone,
-          amount: total,
+          amount: Math.round(total), // Safaricom requires a whole number
           accountReference: `Order-${Date.now()}`,
           transactionDesc: 'Payment for electronics',
         }),
       })
 
       const mpesaData = await mpesaResponse.json()
+      console.log('[Checkout] M-Pesa initiate response:', mpesaData)
 
       if (!mpesaData.success) {
         throw new Error(mpesaData.error || 'Failed to initiate payment')
