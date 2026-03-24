@@ -8,6 +8,7 @@ import { formatKsh } from '@/lib/currency'
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, getCartTotal, getCartCount } = useCart()
+  const [showBankModal, setShowBankModal] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   const subtotal = getCartTotal()
@@ -145,9 +146,18 @@ export default function CartPage() {
                 Proceed to Checkout
               </Link>
 
-              <button className="block w-full bg-gray-900 text-white text-center py-4 rounded-lg hover:bg-gray-800 transition font-semibold">
-                Buy with PayPal
-              </button>
+              {/* Bank Transfer button — only shown when cart has items */}
+              {cart.length > 0 && (
+                <button
+                  onClick={() => setShowBankModal(true)}
+                  className="flex items-center justify-center gap-2 w-full bg-slate-700 text-white text-center py-4 rounded-lg hover:bg-slate-800 transition font-semibold"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 6h18M3 14h18M3 18h18" />
+                  </svg>
+                  Pay via Bank Transfer
+                </button>
+              )}
 
               {/* Trust Badges */}
               <div className="mt-6 pt-6 border-t space-y-3">
@@ -197,6 +207,66 @@ export default function CartPage() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bank Transfer Modal */}
+      {showBankModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-slate-700 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 6h18M3 14h18M3 18h18" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Bank Transfer Details</h3>
+              </div>
+              <button
+                onClick={() => setShowBankModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition text-2xl leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Instructions */}
+            <p className="text-sm text-gray-600 mb-6">
+              Transfer the exact amount below to the account details provided. Your order will be processed once payment is confirmed.
+            </p>
+
+            {/* Bank Details */}
+            <div className="bg-slate-50 border border-slate-200 rounded-lg divide-y divide-slate-200 mb-6">
+              {[
+                { label: 'Account Name',   value: 'Apple Kenya Ltd' },
+                { label: 'Bank Name',      value: 'Equity Bank Kenya' },
+                { label: 'Account Number', value: '0123456789' },
+                { label: 'Branch',         value: 'Nairobi CBD' },
+                { label: 'Amount Due',     value: formatKsh(total) },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between items-center px-4 py-3">
+                  <span className="text-sm text-gray-500">{label}</span>
+                  <span className="text-sm font-semibold text-gray-900 text-right">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Reference note */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+              <p className="text-xs text-amber-800">
+                Use your phone number as the payment reference so we can match your transfer quickly.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowBankModal(false)}
+              className="w-full bg-slate-700 text-white py-3 rounded-lg hover:bg-slate-800 transition font-semibold"
+            >
+              Got it, I'll transfer now
+            </button>
           </div>
         </div>
       )}
