@@ -74,17 +74,28 @@ async function getMpesaAccessToken(): Promise<string> {
 
   const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')
 
+  console.log(`[M-Pesa] Attempting to fetch M-Pesa token... (env: ${MPESA_ENV})`)
+
   const response = await fetch(URLS[MPESA_ENV].auth, {
     headers: { Authorization: `Basic ${auth}` },
   })
 
   const data = await response.json()
-  console.log('[M-Pesa] Auth response:', data)
 
-  if (!data.access_token) {
-    throw new Error(`Failed to get M-Pesa access token: ${JSON.stringify(data)}`)
+  // Log the full Safaricom auth response — shows exactly why keys are rejected
+  console.log(`[M-Pesa] Auth response (HTTP ${response.status}):`, data)
+
+  if (!response.ok || !data.access_token) {
+    // Safaricom puts the rejection reason in errorMessage or ResultDesc
+    const reason =
+      data.errorMessage ||
+      data.error_description ||
+      data.ResultDesc ||
+      JSON.stringify(data)
+    throw new Error(`M-Pesa token request failed (HTTP ${response.status}): ${reason}`)
   }
 
+  console.log('[M-Pesa] Token fetched successfully.')
   return data.access_token
 }
 
