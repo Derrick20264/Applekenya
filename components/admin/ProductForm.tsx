@@ -44,47 +44,58 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Required field validation before touching Supabase
+    if (!formData.name.trim()) {
+      alert('Product name is required.')
+      return
+    }
+    if (!formData.category) {
+      alert('Please select a category.')
+      return
+    }
+
     setLoading(true)
 
     try {
+      // ── Step 1: image upload ──────────────────────────────────────────
+      // Must complete and return a URL before we build the insert payload.
       let imageUrl = formData.image_url.trim()
 
-      // Step 1: upload file and capture the returned public URL
       if (imageFile && imageSource === 'upload') {
         setUploadProgress(true)
-        imageUrl = await uploadProductImage(imageFile)
+        imageUrl = await uploadProductImage(imageFile) // throws on failure
         setUploadProgress(false)
-
-        if (!imageUrl) {
-          alert('Image upload failed — no URL returned. Please try again.')
-          return
-        }
       }
 
-      // Step 2: build payload with exact column names, no undefined values
+      if (!imageUrl) {
+        alert('An image URL is required. Upload a file or paste a URL.')
+        return
+      }
+
+      // ── Step 2: build payload ─────────────────────────────────────────
       const productData = {
         name:        formData.name.trim(),
-        brand:       formData.brand.trim()        || '',
-        price:       Number(formData.price)       || 0,
-        stock:       Number(formData.stock)       || 0,
+        brand:       formData.brand.trim()       || '',
+        price:       Number(formData.price)      || 0,
+        stock:       Number(formData.stock)      || 0,
         category:    formData.category,
-        description: formData.description.trim()  || '',
-        image_url:   imageUrl                     || '',
+        description: formData.description.trim() || '',
+        image_url:   imageUrl,
       }
 
-      // Step 3: log so you can inspect the exact payload before it hits Supabase
-      console.log('Final Payload:', productData)
+      console.log('Payload:', productData)
 
+      // ── Step 3: insert / update ───────────────────────────────────────
       if (product) {
         await updateProduct(product.id, productData)
       } else {
-        await createProduct(productData)
+        await createProduct(productData) // throws with full DB error on failure
       }
 
       onClose()
     } catch (error: any) {
-      // Surface the full Supabase error — message, details, and hint
-      console.error('Supabase Error:', error?.message, error?.details, error?.hint)
+      console.error('DB Error:', error?.message, error?.details, error?.hint)
       alert('Error: ' + (error?.message ?? 'Unknown error'))
     } finally {
       setLoading(false)
