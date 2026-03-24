@@ -19,8 +19,6 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     description: '',
     image_url: '',
   })
-  const [storageOptions, setStorageOptions] = useState<string[]>([])
-  const [colorOptions, setColorOptions] = useState<string[]>([])
   const [storageInput, setStorageInput] = useState('')
   const [colorInput, setColorInput] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -45,33 +43,11 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       if (product.image_url) {
         setImagePreview(product.image_url)
       }
-      setStorageOptions(product.storage_options ?? [])
-      setColorOptions(product.color_options ?? [])
+      setStorageInput(product.storage_options?.join(', ') ?? '')
+      setColorInput(product.color_options?.join(', ') ?? '')
     }
   }, [product])
 
-  const addTag = (value: string, list: string[], setList: (v: string[]) => void, setInput: (v: string) => void) => {
-    const trimmed = value.trim().replace(/,$/, '')
-    if (trimmed && !list.includes(trimmed)) setList([...list, trimmed])
-    setInput('')
-  }
-
-  const removeTag = (index: number, list: string[], setList: (v: string[]) => void) => {
-    setList(list.filter((_, i) => i !== index))
-  }
-
-  const handleTagKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    input: string,
-    list: string[],
-    setList: (v: string[]) => void,
-    setInput: (v: string) => void
-  ) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(input, list, setList, setInput)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -113,8 +89,8 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         category:        formData.category,
         description:     formData.description.trim() || '',
         image_url:       imageUrl,
-        storage_options: showVariantFields ? storageOptions : [],
-        color_options:   showVariantFields ? colorOptions   : [],
+        storage_options: showVariantFields ? storageInput.split(',').map(s => s.trim()).filter(Boolean) : [],
+        color_options:   showVariantFields ? colorInput.split(',').map(s => s.trim()).filter(Boolean)   : [],
       }
 
       console.log('Payload:', productData)
@@ -273,57 +249,28 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
 
           {/* Storage & Color Options (phones / laptops only) */}
           {showVariantFields && (
-            <div className="space-y-4">
-              {/* Storage Options */}
+            <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Storage Options</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {storageOptions.map((opt, i) => (
-                    <span key={i} className="flex items-center gap-1 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
-                      {opt}
-                      <button type="button" onClick={() => removeTag(i, storageOptions, setStorageOptions)} className="hover:text-blue-600 font-bold leading-none">×</button>
-                    </span>
-                  ))}
-                </div>
                 <input
                   type="text"
                   value={storageInput}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    if (val.endsWith(',')) addTag(val, storageOptions, setStorageOptions, setStorageInput)
-                    else setStorageInput(val)
-                  }}
-                  onKeyDown={(e) => handleTagKeyDown(e, storageInput, storageOptions, setStorageOptions, setStorageInput)}
-                  onBlur={() => storageInput.trim() && addTag(storageInput, storageOptions, setStorageOptions, setStorageInput)}
+                  onChange={(e) => setStorageInput(e.target.value)}
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. 128GB — press Enter or comma to add"
+                  placeholder="e.g. 128GB, 256GB, 512GB"
                 />
+                <p className="text-xs text-gray-500 mt-1">Separate options with commas</p>
               </div>
-
-              {/* Color Options */}
               <div>
                 <label className="block text-sm font-medium mb-2">Color Options</label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {colorOptions.map((opt, i) => (
-                    <span key={i} className="flex items-center gap-1 bg-purple-100 text-purple-800 text-sm px-3 py-1 rounded-full">
-                      {opt}
-                      <button type="button" onClick={() => removeTag(i, colorOptions, setColorOptions)} className="hover:text-purple-600 font-bold leading-none">×</button>
-                    </span>
-                  ))}
-                </div>
                 <input
                   type="text"
                   value={colorInput}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    if (val.endsWith(',')) addTag(val, colorOptions, setColorOptions, setColorInput)
-                    else setColorInput(val)
-                  }}
-                  onKeyDown={(e) => handleTagKeyDown(e, colorInput, colorOptions, setColorOptions, setColorInput)}
-                  onBlur={() => colorInput.trim() && addTag(colorInput, colorOptions, setColorOptions, setColorInput)}
+                  onChange={(e) => setColorInput(e.target.value)}
                   className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. Black — press Enter or comma to add"
+                  placeholder="e.g. Black, Silver, Blue"
                 />
+                <p className="text-xs text-gray-500 mt-1">Separate options with commas</p>
               </div>
             </div>
           )}
