@@ -18,7 +18,12 @@ export default function Footer() {
           <div>
             <h3 className="font-bold mb-4">Contact</h3>
             <p className="text-gray-400">Email: info@estore.com</p>
-            <p className="text-gray-400">Phone: (555) 123-4567</p>
+            <p className="text-gray-400">
+              Phone:{' '}
+              <a href="tel:+254712345610" className="hover:text-white transition">
+                0712345610
+              </a>
+            </p>
           </div>
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
