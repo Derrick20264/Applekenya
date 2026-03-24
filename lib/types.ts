@@ -7,6 +7,8 @@ export interface Product {
   category: string
   description: string
   image_url?: string
+  storage_options?: string[]
+  color_options?: string[]
   created_at: string
 }
 

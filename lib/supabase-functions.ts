@@ -109,29 +109,29 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function createProduct(product: Omit<Product, 'id' | 'created_at'>): Promise<Product | null> {
-  // Explicitly map every column — no spreading, no undefined values
   const payload = {
-    name:        String(product.name        ?? '').trim(),
-    brand:       String(product.brand       ?? '').trim(),
-    price:       Number(product.price)  || 0,
-    stock:       Number(product.stock)  || 0,
-    category:    String(product.category    ?? '').trim(),
-    description: String(product.description ?? '').trim(),
-    image_url:   String(product.image_url   ?? '').trim(),
+    name:            String(product.name        ?? '').trim(),
+    brand:           String(product.brand       ?? '').trim(),
+    price:           parseFloat(String(product.price))   || 0,
+    stock:           parseInt(String(product.stock), 10) || 0,
+    category:        String(product.category    ?? '').trim(),
+    description:     String(product.description ?? '').trim(),
+    image_url:       String(product.image_url   ?? '').trim(),
+    storage_options: Array.isArray(product.storage_options) ? product.storage_options : [],
+    color_options:   Array.isArray(product.color_options)   ? product.color_options   : [],
   }
 
   console.log('Final Payload:', payload)
 
-  const { data, error } = await supabase
+  const { data, error: dbError } = await supabase
     .from('products')
     .insert([payload])
     .select()
     .single()
 
-  if (error) {
-    console.error('Supabase Error:', error.message, error.details, error.hint)
-    alert('Error: ' + error.message)
-    throw error
+  if (dbError) {
+    console.error('DB Error:', dbError.message, dbError.details, dbError.hint)
+    throw dbError
   }
 
   return data
@@ -171,31 +171,33 @@ export async function deleteProduct(id: string): Promise<boolean> {
 
 // ==================== IMAGE UPLOAD ====================
 
-// Change BUCKET_NAME if you rename the bucket in Supabase Storage
-const BUCKET_NAME = 'products'
+// Bucket name as it appears in Supabase Storage dashboard
+const STORAGE_BUCKET = 'products'
 
 export async function uploadProductImage(file: File): Promise<string> {
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-  const filePath = `product-images/${fileName}`
+  // Guard: should never be called without a file, but be explicit
+  if (!file) throw new Error('No file provided for upload.')
 
-  // Step 1: upload the file
+  // Clean path: products/1234567890_filename.jpg
+  const filePath = `${Date.now()}_${file.name}`
+
+  // Step 1: upload to the 'products' bucket
   const { error: uploadError } = await supabase.storage
-    .from(BUCKET_NAME)
-    .upload(filePath, file)
+    .from(STORAGE_BUCKET)
+    .upload(filePath, file, { upsert: false })
 
   if (uploadError) {
-    console.error('Storage upload error:', uploadError)
+    console.error('Storage Error:', uploadError)
     throw new Error(uploadError.message)
   }
 
-  // Step 2: get the public URL only after a successful upload
+  // Step 2: get public URL only after confirmed upload
   const { data } = supabase.storage
-    .from(BUCKET_NAME)
+    .from(STORAGE_BUCKET)
     .getPublicUrl(filePath)
 
   if (!data?.publicUrl) {
-    throw new Error('Upload succeeded but could not retrieve the public URL.')
+    throw new Error('Upload succeeded but public URL could not be retrieved.')
   }
 
   return data.publicUrl
