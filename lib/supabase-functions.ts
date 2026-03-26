@@ -119,6 +119,7 @@ export async function createProduct(product: Omit<Product, 'id' | 'created_at'>)
     image_url:       String(product.image_url   ?? '').trim(),
     storage_options: Array.isArray(product.storage_options) ? product.storage_options : [],
     color_options:   Array.isArray(product.color_options)   ? product.color_options   : [],
+    variants:        Array.isArray(product.variants)        ? product.variants        : [],
   }
 
   console.log('Final Payload:', payload)

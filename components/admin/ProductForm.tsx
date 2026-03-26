@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createProduct, updateProduct, uploadProductImage } from '@/lib/supabase-functions'
-import { Product } from '@/lib/types'
+import { Product, Variant } from '@/lib/types'
 
 interface ProductFormProps {
   product?: Product | null
@@ -21,6 +21,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
   })
   const [storageInput, setStorageInput] = useState('')
   const [colorInput, setColorInput] = useState('')
+  const [variants, setVariants] = useState<Variant[]>([])
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [imageSource, setImageSource] = useState<'upload' | 'url'>('upload')
@@ -45,8 +46,22 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       }
       setStorageInput(product.storage_options?.join(', ') ?? '')
       setColorInput(product.color_options?.join(', ') ?? '')
+      setVariants(product.variants ?? [])
     }
   }, [product])
+
+  const addVariant = () =>
+    setVariants(v => [...v, { storage: '', color: '', price: 0, stock: 0 }])
+
+  const removeVariant = (i: number) =>
+    setVariants(v => v.filter((_, idx) => idx !== i))
+
+  const updateVariant = (i: number, field: keyof Variant, value: string) =>
+    setVariants(v => v.map((row, idx) =>
+      idx === i
+        ? { ...row, [field]: field === 'price' || field === 'stock' ? Number(value) : value }
+        : row
+    ))
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,6 +106,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         image_url:       imageUrl,
         storage_options: showVariantFields ? storageInput.split(',').map(s => s.trim()).filter(Boolean) : [],
         color_options:   showVariantFields ? colorInput.split(',').map(s => s.trim()).filter(Boolean)   : [],
+        variants:        showVariantFields ? variants : [],
       }
 
       console.log('Payload:', productData)
@@ -247,31 +263,70 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
             />
           </div>
 
-          {/* Storage & Color Options (phones / laptops only) */}
+          {/* Variants (phones / laptops only) */}
           {showVariantFields && (
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Storage Options</label>
-                <input
-                  type="text"
-                  value={storageInput}
-                  onChange={(e) => setStorageInput(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. 128GB, 256GB, 512GB"
-                />
-                <p className="text-xs text-gray-500 mt-1">Separate options with commas</p>
+            <div className="border rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Variants</span>
+                <button
+                  type="button"
+                  onClick={addVariant}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                >
+                  + Add Variant
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Color Options</label>
-                <input
-                  type="text"
-                  value={colorInput}
-                  onChange={(e) => setColorInput(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g. Black, Silver, Blue"
-                />
-                <p className="text-xs text-gray-500 mt-1">Separate options with commas</p>
-              </div>
+
+              {variants.length === 0 && (
+                <p className="text-xs text-gray-400 text-center py-2">No variants yet. Click "+ Add Variant" to start.</p>
+              )}
+
+              {variants.map((v, i) => (
+                <div key={i} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-center">
+                  <input
+                    type="text"
+                    value={v.storage}
+                    onChange={(e) => updateVariant(i, 'storage', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Storage"
+                  />
+                  <input
+                    type="text"
+                    value={v.color}
+                    onChange={(e) => updateVariant(i, 'color', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Color"
+                  />
+                  <input
+                    type="number"
+                    value={v.price || ''}
+                    onChange={(e) => updateVariant(i, 'price', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Price"
+                    min={0}
+                  />
+                  <input
+                    type="number"
+                    value={v.stock || ''}
+                    onChange={(e) => updateVariant(i, 'stock', e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Stock"
+                    min={0}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(i)}
+                    className="text-red-400 hover:text-red-600 text-lg leading-none px-1"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+
+              {variants.length > 0 && (
+                <p className="text-xs text-gray-400">Storage · Color · Price (KSh) · Stock</p>
+              )}
             </div>
           )}
 
