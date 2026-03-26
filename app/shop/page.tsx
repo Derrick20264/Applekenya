@@ -48,17 +48,17 @@ export default function Shop() {
     // Price range filter
     if (priceRange !== 'all') {
       switch (priceRange) {
-        case 'under-100':
-          filtered = filtered.filter(p => p.price < 100)
+        case 'under-50k':
+          filtered = filtered.filter(p => p.price < 50000)
           break
-        case '100-500':
-          filtered = filtered.filter(p => p.price >= 100 && p.price <= 500)
+        case '50k-100k':
+          filtered = filtered.filter(p => p.price >= 50000 && p.price <= 100000)
           break
-        case '500-1000':
-          filtered = filtered.filter(p => p.price > 500 && p.price <= 1000)
+        case '100k-200k':
+          filtered = filtered.filter(p => p.price > 100000 && p.price <= 200000)
           break
-        case 'over-1000':
-          filtered = filtered.filter(p => p.price > 1000)
+        case 'over-200k':
+          filtered = filtered.filter(p => p.price > 200000)
           break
       }
     }
@@ -210,41 +210,41 @@ export default function Shop() {
                     <input
                       type="radio"
                       name="price"
-                      checked={priceRange === 'under-100'}
-                      onChange={() => setPriceRange('under-100')}
+                      checked={priceRange === 'under-50k'}
+                      onChange={() => setPriceRange('under-50k')}
                       className="mr-3 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm">Under KSh 13,000</span>
+                    <span className="text-sm">Under KSh 50,000</span>
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="price"
-                      checked={priceRange === '100-500'}
-                      onChange={() => setPriceRange('100-500')}
+                      checked={priceRange === '50k-100k'}
+                      onChange={() => setPriceRange('50k-100k')}
                       className="mr-3 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm">KSh 13,000 - KSh 65,000</span>
+                    <span className="text-sm">KSh 50,000 - KSh 100,000</span>
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="price"
-                      checked={priceRange === '500-1000'}
-                      onChange={() => setPriceRange('500-1000')}
+                      checked={priceRange === '100k-200k'}
+                      onChange={() => setPriceRange('100k-200k')}
                       className="mr-3 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm">KSh 65,000 - KSh 130,000</span>
+                    <span className="text-sm">KSh 100,000 - KSh 200,000</span>
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       name="price"
-                      checked={priceRange === 'over-1000'}
-                      onChange={() => setPriceRange('over-1000')}
+                      checked={priceRange === 'over-200k'}
+                      onChange={() => setPriceRange('over-200k')}
                       className="mr-3 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm">Over KSh 130,000</span>
+                    <span className="text-sm">Over KSh 200,000</span>
                   </label>
                 </div>
               </div>
