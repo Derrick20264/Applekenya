@@ -19,8 +19,6 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     description: '',
     image_url: '',
   })
-  const [storageInput, setStorageInput] = useState('')
-  const [colorInput, setColorInput] = useState('')
   const [variants, setVariants] = useState<Variant[]>([])
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
@@ -28,7 +26,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(false)
 
-  const showVariantFields = ['phones', 'laptops'].includes(formData.category)
+  const showVariantFields = ['phones', 'tablets', 'laptops'].includes(formData.category)
 
   useEffect(() => {
     if (product) {
@@ -44,8 +42,6 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
       if (product.image_url) {
         setImagePreview(product.image_url)
       }
-      setStorageInput(product.storage_options?.join(', ') ?? '')
-      setColorInput(product.color_options?.join(', ') ?? '')
       setVariants(product.variants ?? [])
     }
   }, [product])
@@ -104,8 +100,6 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         category:        formData.category,
         description:     formData.description.trim() || '',
         image_url:       imageUrl,
-        storage_options: showVariantFields ? storageInput.split(',').map(s => s.trim()).filter(Boolean) : [],
-        color_options:   showVariantFields ? colorInput.split(',').map(s => s.trim()).filter(Boolean)   : [],
         variants:        showVariantFields ? variants : [],
       }
 
@@ -263,11 +257,11 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
             />
           </div>
 
-          {/* Variants (phones / laptops only) */}
+          {/* Product Variants (phones / tablets / laptops only) */}
           {showVariantFields && (
             <div className="border rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Variants</span>
+                <span className="text-sm font-medium">Product Variants</span>
                 <button
                   type="button"
                   onClick={addVariant}
