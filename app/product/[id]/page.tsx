@@ -1,9 +1,9 @@
 import { getProductById, getProducts } from '@/lib/supabase-functions'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import AddToCartButton from '@/components/AddToCartButton'
 import ProductGallery from '@/components/ProductGallery'
 import RelatedProducts from '@/components/RelatedProducts'
+import ProductVariantSelector from '@/components/ProductVariantSelector'
 import { formatKsh } from '@/lib/currency'
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
@@ -62,18 +62,11 @@ export default async function ProductPage({ params }: { params: { id: string } }
                 <span className="text-sm font-semibold text-gray-900">{product.brand}</span>
               </div>
 
-              {/* Price and Stock */}
-              <div className="flex items-baseline gap-4 mb-6 pb-6 border-b">
-                <p className="text-4xl font-bold text-blue-600">{formatKsh(product.price)}</p>
-                {product.stock < 10 && product.stock > 0 && (
-                  <span className="bg-orange-100 text-orange-800 text-sm font-medium px-3 py-1 rounded-full">
-                    Only {product.stock} left!
-                  </span>
-                )}
-              </div>
+              {/* Price, Variant Selector, and Add to Cart */}
+              <ProductVariantSelector product={product} />
 
               {/* Description */}
-              <div className="mb-6">
+              <div className="mb-6 mt-6">
                 <h2 className="text-lg font-semibold mb-3 text-gray-900">Description</h2>
                 <p className="text-gray-700 leading-relaxed">{product.description}</p>
               </div>
@@ -109,9 +102,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
                   <span className="text-sm text-gray-900 capitalize">{product.category}</span>
                 </div>
               </div>
-
-              {/* Add to Cart Button */}
-              <AddToCartButton product={product} />
 
               {/* Features */}
               <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
