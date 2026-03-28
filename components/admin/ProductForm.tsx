@@ -46,6 +46,15 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     }
   }, [product])
 
+  const quickFillIphone = () => {
+    setFormData(f => ({ ...f, brand: 'Apple', category: 'phones' }))
+    setVariants([
+      { storage: '128GB', color: '', price: 0, stock: 10 },
+      { storage: '256GB', color: '', price: 0, stock: 10 },
+      { storage: '512GB', color: '', price: 0, stock: 10 },
+    ])
+  }
+
   const addVariant = () =>
     setVariants(v => [...v, { storage: '', color: '', price: 0, stock: 0 }])
 
@@ -262,13 +271,23 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
             <div className="border rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Product Variants</span>
-                <button
-                  type="button"
-                  onClick={addVariant}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                >
-                  + Add Variant
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={quickFillIphone}
+                    className="text-xs text-gray-500 hover:text-gray-700 border border-gray-300 rounded px-2 py-1 hover:bg-gray-50 transition"
+                    title="Fill with standard iPhone storage variants"
+                  >
+                    ⚡ iPhone Quick Fill
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addVariant}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                  >
+                    + Add Variant
+                  </button>
+                </div>
               </div>
 
               {variants.length === 0 && (
