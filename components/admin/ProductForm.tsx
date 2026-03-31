@@ -18,6 +18,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
     category: '',
     description: '',
     image_url: '',
+    condition: 'Brand New',
   })
   const [variants, setVariants] = useState<Variant[]>([])
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -38,6 +39,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         category: product.category,
         description: product.description,
         image_url: product.image_url || '',
+        condition: product.condition ?? 'Brand New',
       })
       if (product.image_url) {
         setImagePreview(product.image_url)
@@ -109,6 +111,7 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
         category:        formData.category,
         description:     formData.description.trim() || '',
         image_url:       imageUrl,
+        condition:       formData.condition as Product['condition'],
         variants:        showVariantFields ? variants : [],
       }
 
@@ -251,6 +254,20 @@ export default function ProductForm({ product, onClose }: ProductFormProps) {
               <option value="accessories">Accessories</option>
               <option value="audio">Audio</option>
               <option value="wearables">Wearables</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Condition *</label>
+            <select
+              value={formData.condition}
+              onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            >
+              <option value="Brand New">Brand New</option>
+              <option value="Ex-UK Grade A">Ex-UK Grade A</option>
+              <option value="Refurbished">Refurbished</option>
             </select>
           </div>
 

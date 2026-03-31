@@ -14,6 +14,7 @@ export interface Product {
   category: string
   description: string
   image_url?: string
+  condition?: 'Brand New' | 'Ex-UK Grade A' | 'Refurbished'
   storage_options?: string[]
   color_options?: string[]
   variants?: Variant[]
